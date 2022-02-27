@@ -21,7 +21,8 @@ public class CoinScript : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            other.GetComponent<PlayerMovementController>().Score++; 
+            other.GetComponent<PlayerMovementController>().Score++;
+            other.GetComponent<AudioSource>().Play();
         }
 
         Destroy(gameObject);

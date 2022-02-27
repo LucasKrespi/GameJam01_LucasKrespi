@@ -51,4 +51,9 @@ public class ButtonManager : MonoBehaviour
     {
         SceneManager.LoadScene("Game");
     }
+
+    public void MainMenu()
+    {
+        SceneManager.LoadScene("MainMenu 1");
+    }
 }

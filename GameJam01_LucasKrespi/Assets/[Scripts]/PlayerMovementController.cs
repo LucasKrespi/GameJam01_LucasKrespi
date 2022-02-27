@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Animations;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovementController : MonoBehaviour
 {
@@ -26,6 +27,11 @@ public class PlayerMovementController : MonoBehaviour
     private readonly int MovementXHash = Animator.StringToHash("MovementX");
     private readonly int MovementYHash = Animator.StringToHash("MovementY");
     private readonly int OnJumpHash = Animator.StringToHash("Jump");
+
+    private Vector3 initialPos;
+    public int life = 3;
+
+    public PhaseStarter currentPhase;
     // Start is called before the first frame update
     void Start()
     {
@@ -33,6 +39,8 @@ public class PlayerMovementController : MonoBehaviour
         rigidbody = GetComponent<Rigidbody>();
 
         pauseCanvas.gameObject.SetActive(false);
+
+        initialPos = transform.position;
     }
 
     // Update is called once per frame
@@ -50,6 +58,14 @@ public class PlayerMovementController : MonoBehaviour
 
         transform.Rotate(new Vector3(0.0f, inputVector2.x * 100 * Time.deltaTime, 0.0f));
 
+        if(life <= 0)
+        {
+            PlayerPrefs.SetInt("Score", Score);
+            PlayerPrefs.SetString("Message", "You lost all 3 lives rip");
+
+            SceneManager.LoadScene("GameOver");
+        }
+
     }
     public void OnMovement(InputValue valeu)
     {
@@ -62,9 +78,11 @@ public class PlayerMovementController : MonoBehaviour
 
     public void OnJump(InputValue valeu)
     {
+        if (playerAnimator.GetBool(OnJumpHash)) return;
+
         rigidbody.AddForce((transform.up + moveDirection) * jumpForce, ForceMode.Impulse);
 
-        playerAnimator.SetBool(OnJumpHash, valeu.isPressed);
+        playerAnimator.SetBool(OnJumpHash, true);
     }
 
     public void OnPause(InputValue valeu)
@@ -76,8 +94,41 @@ public class PlayerMovementController : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            transform.position = initialPos;
+            life--;
+
+            currentPhase.ResetWalls();
+        }
+
+        if (collision.gameObject.CompareTag("PhaseStarter"))
+        {
+            currentPhase = collision.gameObject.GetComponent<PhaseStarter>();
+
+            initialPos = collision.transform.position;
+        }
+
         playerAnimator.SetBool(OnJumpHash, false);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Trophy"))
+        {
+            PlayerPrefs.SetInt("Score", Score);
+            PlayerPrefs.SetString("Message", "YOU WIN");
 
+            SceneManager.LoadScene("GameOver");
+
+        }
+
+        if (other.gameObject.CompareTag("Death"))
+        {
+            transform.position = initialPos;
+            life--;
+
+            currentPhase.ResetWalls();
+        }
+    }
 }
